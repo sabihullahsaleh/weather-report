@@ -68,9 +68,9 @@ class WeatherStatsService < ApplicationService
 
   def print_report
     # for printing required output
-    puts "City\twind_avg\twind_median\\ttemp_avg\ttemp_median"
+    puts "City\t\twind_avg\twind_median\ttemp_avg\ttemp_median"
     DEFAULT_CITIES.each do |city|
-      puts "#{city}\t\t#{@average_wind_data[city]}\t\t#{@median_wind_data[city]}\t\t#{@average_temp_data[city]}\t\t#{@median_temp_data[city]}"
+      puts "#{city}\t#{@average_wind_data[city]}\t#{@median_wind_data[city]}\t#{@average_temp_data[city]}\t#{@median_temp_data[city]}"
     end
   end
 end
