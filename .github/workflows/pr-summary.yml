@@ -11,23 +11,39 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - name: Gather PR diff
-        run: |
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD > "$RUNNER_TEMP/pr.diff"
+      - name: Prepare Codex prompt
+        id: prompt
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = `${process.env.RUNNER_TEMP}/codex-pr-summary.txt`;
+            const response = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              headers: { accept: 'application/vnd.github.v3.diff' },
+            });
+            const instructions = [
+              'You are preparing a concise pull request summary describing the key changes, risks, and follow-up actions.',
+              'Keep it under 150 words and write in paragraph form.',
+              'Diff:',
+              '```diff',
+              response.data,
+              '```'
+            ].join('\n');
+            fs.writeFileSync(path, instructions);
+            core.setOutput('prompt-path', path);
 
       - name: Ask Codex for summary
         id: codex
         uses: openai/codex-action@main
         with:
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          prompt: |
-            You are preparing a concise pull request summary describing the key changes, risks, and follow-up actions.
-            Keep it under 150 words.
-            Diff:
-          prompt_file: ${{ runner.temp }}/pr.diff
+          prompt_file: ${{ steps.prompt.outputs.prompt-path }}
           working_directory: ${{ github.workspace }}
 
       - name: Post Codex summary
