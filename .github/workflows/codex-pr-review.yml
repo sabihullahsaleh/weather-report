@@ -1,0 +1,28 @@
+name: Codex PR Review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
+
+jobs:
+  codex-review:
+    name: Codex Review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Codex PR review
+        uses: openai/codex-action@main
+        with:
+          prompts: |
+            .github/prompts/reviewer-role.md
+            .github/prompts/reviewer-response.md
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
