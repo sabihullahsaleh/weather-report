@@ -42,9 +42,9 @@ jobs:
         id: codex
         uses: openai/codex-action@main
         with:
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          prompt_file: ${{ steps.prompt.outputs.prompt-path }}
-          working_directory: ${{ github.workspace }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ steps.prompt.outputs.prompt-path }}
+          working-directory: ${{ github.workspace }}
 
       - name: Post Codex summary
         if: steps.codex.outputs.final_message != ''
