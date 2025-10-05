@@ -1,0 +1,49 @@
+name: Codex PR Summary
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Gather PR diff
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD > "$RUNNER_TEMP/pr.diff"
+
+      - name: Ask Codex for summary
+        id: codex
+        uses: openai/codex-action@main
+        with:
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are preparing a concise pull request summary describing the key changes, risks, and follow-up actions.
+            Keep it under 150 words.
+            Diff:
+          prompt_file: ${{ runner.temp }}/pr.diff
+          working_directory: ${{ github.workspace }}
+
+      - name: Post Codex summary
+        if: steps.codex.outputs.final_message != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const summary = `${{ toJSON(steps.codex.outputs.final_message) }}`.trim();
+            if (!summary) {
+              core.info('Codex returned an empty summary.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `### Codex Suggested Summary\n\n${summary}`
+            });
