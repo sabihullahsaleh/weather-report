@@ -16,13 +16,33 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
       - name: Run Codex PR review
+        id: codex
         uses: openai/codex-action@main
         with:
-          prompts: |
-            .github/prompts/reviewer-role.md
-            .github/prompts/reviewer-response.md
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          prompt_file: .github/prompts/codex-pr-review.md
+          working_directory: ${{ github.workspace }}
+
+      - name: Post Codex review to PR
+        if: github.event_name == 'pull_request' && steps.codex.outputs.final_message != ''
+        uses: actions/github-script@v7
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CODEX_REVIEW: ${{ steps.codex.outputs.final_message }}
+        with:
+          script: |
+            const core = require('@actions/core');
+            const body = (process.env.CODEX_REVIEW || '').trim();
+            if (!body) {
+              core.info('Codex did not produce review content.');
+              return;
+            }
+            await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body,
+              event: 'COMMENT'
+            });
