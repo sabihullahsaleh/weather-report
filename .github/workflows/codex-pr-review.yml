@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run Codex PR review
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@main
         with:
           prompts: |
             .github/prompts/reviewer-role.md
