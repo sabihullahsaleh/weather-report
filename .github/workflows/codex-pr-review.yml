@@ -39,7 +39,7 @@ jobs:
             Review ONLY the changes introduced by the PR.
             Suggest any improvements, potential bugs, or issues.
             Be concise and specific in your feedback.
-            Also check the prompts mentioned in .github/prompts/reviewer-role.md file.
+            Also check the prompts mentioned in .github/prompts/reviewer-role.md file.thanks
 
             Pull request title and body:
             ----
