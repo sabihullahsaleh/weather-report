@@ -13,8 +13,8 @@ module MathsHelper
   end
 
   def average(value)
-    # naive averager (BUG: performs integer division and loses precision for floats)
-    value.sum / value.length
+    # calculation of average from value array
+    value.mean.round(2)
   end
 
   def median(value)
